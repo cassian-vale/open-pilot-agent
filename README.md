@@ -35,9 +35,9 @@ Open Pilot Agent is a high-performance, structured AI agent framework based on *
 ## Documentation Links
 - **API Documentation**: [English](./docs/en/api/) | [Chinese](./docs/zh/api/)
 - **Installation Guide**: [English](./docs/en/install/docker.md) | [Chinese](./docs/zh/install/docker.md)
-- **User Guides**:
+- **Developer Documentation Guides**:
   - Basic Guide: [English](./docs/en/instructions/base_agent/BaseAgent_Basic_Guide.md) | [Chinese](./docs/zh/instructions/base_agent/BaseAgent应用基础指南.md)
-  - Developer Advanced Guide: [English](./docs/en/instructions/base_agent/BaseAgent_Advanced_Guide.md) | [Chinese](./docs/zh/instructions/base_agent/BaseAgent应用进阶指南.md)
+  - Advanced Guide: [English](./docs/en/instructions/base_agent/BaseAgent_Advanced_Guide.md) | [Chinese](./docs/zh/instructions/base_agent/BaseAgent应用进阶指南.md)
 
 ## Quick Start
 

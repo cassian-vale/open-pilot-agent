@@ -35,9 +35,9 @@ Open Pilot Agent 是一个基于 **LangGraph** 和自定义 **LLMClient** 的高
 ## 文档链接
 - **API 文档**: [英文](./docs/en/api/) | [中文](./docs/zh/api/)
 - **安装指南**: [英文](./docs/en/install/docker.md) | [中文](./docs/zh/install/docker.md)
-- **指南文档**:
-  - 基础指南: [英文](./docs/en/instructions/base_agent/BaseAgent_Basic_Guide.md) | [中文](./docs/zh/instructions/base_agent/BaseAgent应用基础指南.md)
-  - 开发者进阶开发指南: [英文](./docs/en/instructions/base_agent/BaseAgent_Advanced_Guide.md) | [中文](./docs/zh/instructions/base_agent/BaseAgent应用进阶指南.md)
+- **开发者指南文档**:
+  - BaseAgent应用基础指南: [英文](./docs/en/instructions/base_agent/BaseAgent_Basic_Guide.md) | [中文](./docs/zh/instructions/base_agent/BaseAgent应用基础指南.md)
+  - BaseAgent进阶开发指南: [英文](./docs/en/instructions/base_agent/BaseAgent_Advanced_Guide.md) | [中文](./docs/zh/instructions/base_agent/BaseAgent应用进阶指南.md)
 
 ## 快速开始
 
