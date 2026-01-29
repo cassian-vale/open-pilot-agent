@@ -1,4 +1,4 @@
-# information_extraction_app_v2.py
+﻿# coding=utf-8
 import asyncio
 import os
 import sys
@@ -31,7 +31,7 @@ class InformationExtractionRequest(BaseModel):
     text: str = Field(..., description="待抽取的原始文本")
     schema: Dict[str, Any] = Field(..., description="信息抽取的schema定义")
     
-    # --- 必填参数 (修改�? ---
+    # --- 必填参数 (修改后) ---
     model: str = Field(..., description="模型名称 (必填)")
     base_url: str = Field(..., description="API基础URL (必填)")
     api_key: str = Field(..., description="API密钥 (必填)")
@@ -40,20 +40,20 @@ class InformationExtractionRequest(BaseModel):
     # 流式控制参数
     stream: bool = Field(default=False, description="是否启用流式输出")
     # LLM 配置参数
-    max_tokens: Optional[int] = Field(default=None, description="最大token�?)
+    max_tokens: Optional[int] = Field(default=None, description="最大token数")
     temperature: float = Field(default=0.1, description="温度参数")
     top_p: float = Field(default=1.0, description="Top-p参数")
     timeout: float = Field(default=60.0, description="超时时间")
-    max_retries: int = Field(default=3, description="最大重试次�?)
-    enable_thinking: bool = Field(default=False, description="是否启用思考过�?)
+    max_retries: int = Field(default=3, description="最大重试次数")
+    enable_thinking: bool = Field(default=False, description="是否启用思考过程")
 
 
 class InformationExtractionResponse(BaseModel):
     output: Dict[str, Any]
-    content: str = Field(default="", description="模型最终输�?)
-    reasoning_content: str = Field(default="", description="思考过�?)
-    metadata: Dict[str, Any] = Field(default=None, description="元数�?)
-    confidence: float = Field(default=1.0, description="agent置信�?)
+    content: str = Field(default="", description="模型最终输出")
+    reasoning_content: str = Field(default="", description="思考过程")
+    metadata: Dict[str, Any] = Field(default=None, description="元数据")
+    confidence: float = Field(default=1.0, description="agent置信度")
 
 
 # ===== 生命周期管理 =====
@@ -63,7 +63,7 @@ app_logger = logger
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global agent_instance
-    print("🔧 正在初始�?InformationExtractionAgent...")
+    print("🔧 正在初始化 InformationExtractionAgent...")
     try:
         app_name = "information_extraction"
         logger_pool.set_logger(
@@ -75,7 +75,7 @@ async def lifespan(app: FastAPI):
         )
         app_logger = logger_pool.get_logger(app_name)
 
-        # 2. 初始�?Agent (保留默认参数配置)
+        # 2. 初始化 Agent (保留默认参数配置)
         agent_instance = InformationExtractionAgent(
             name="informationExtraction",
             model=os.getenv("IE_MODEL", "deepseek-chat"),
@@ -89,14 +89,14 @@ async def lifespan(app: FastAPI):
             stream=bool(os.getenv("IE_STREAM", "False")),
             enable_thinking=bool(os.getenv("IE_ENABLE_THINKING", "False")),
         )
-        app_logger.info("�?InformationExtractionAgent 初始化完�?)
+        app_logger.info("✅ InformationExtractionAgent 初始化完成")
     except Exception as e:
-        print(f"�?初始化失�? {e}")
+        print(f"❌ 初始化失败: {e}")
         raise
 
     yield
 
-    # 关闭时清�?
+    # 关闭时清理
     print("🧹 清理资源...")
     await GlobalHTTPFactory.close()
     agent_instance = None
@@ -105,13 +105,13 @@ async def lifespan(app: FastAPI):
 # ===== FastAPI App =====
 app = FastAPI(
     title="信息抽取服务 API",
-    description="基于 LangGraph + LLM 的结构化信息抽取服务，支持流式和非流式输�?,
+    description="基于 LangGraph + LLM 的结构化信息抽取服务，支持流式和非流式输出",
     version="1.0.0",
     lifespan=lifespan,
     root_path="/information_extraction/v1"
 )
 
-# 添加 CORS 中间�?
+# 添加 CORS 中间件
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -121,8 +121,8 @@ app.add_middleware(
 )
 
 
-# ===== 健康检查接�?=====
-@app.get("/health", summary="健康检�?)
+# ===== 健康检查接口 =====
+@app.get("/health", summary="健康检查")
 async def health_check():
     if agent_instance is None:
         raise HTTPException(status_code=503, detail="Agent 未初始化")
@@ -130,18 +130,18 @@ async def health_check():
 
 
 # ===== 统一抽取接口 (合并流式与非流式) =====
-@app.post("/chat", response_model=Union[InformationExtractionResponse, str], summary="信息抽取（自动识别流�?非流式）")
+@app.post("/chat", response_model=Union[InformationExtractionResponse, str], summary="信息抽取（自动识别流式/非流式）")
 async def chat_endpoint(request_body: InformationExtractionRequest, raw_request: Request):
     """
-    统一信息抽取接口�?
-    - 如果 request_body.stream == True: 返回 SSE �?(text/event-stream)
+    统一信息抽取接口：
+    - 如果 request_body.stream == True: 返回 SSE 流 (text/event-stream)
     - 如果 request_body.stream == False: 返回 JSON (application/json)
-    均支持客户端断开连接时自动中断后端推理�?
+    均支持客户端断开连接时自动中断后端推理。
     """
     if agent_instance is None:
-        raise HTTPException(status_code=503, detail="服务未就绪，请稍后再�?)
+        raise HTTPException(status_code=503, detail="服务未就绪，请稍后再试")
 
-    # 构建运行时参�?
+    # 构建运行时参数
     run_config = {
         "request_id": request_body.request_id,
         # 必填项：使用请求中的参数
@@ -155,18 +155,18 @@ async def chat_endpoint(request_body: InformationExtractionRequest, raw_request:
         "top_p": request_body.top_p,
         "timeout": request_body.timeout,
         "max_retries": request_body.max_retries,
-        "stream": True,  # �?强制开启底层流�?
+        "stream": True,  # ⚠️ 强制开启底层流式
         "enable_thinking": request_body.enable_thinking,
     }
     
-    # 过滤掉None�?
+    # 过滤掉None值
     run_config = {k: v for k, v in run_config.items() if v is not None}
 
-    # === 分支 1：流式响�?(SSE) ===
+    # === 分支 1：流式响应 (SSE) ===
     if request_body.stream:
         async def generate_sse():
             try:
-                # 1. 发送开始事�?
+                # 1. 发送开始事件
                 start_event = {
                     "type": "start",
                     "content": "",
@@ -180,14 +180,14 @@ async def chat_endpoint(request_body: InformationExtractionRequest, raw_request:
                     schema=request_body.schema, 
                     **run_config
                 ):
-                    # �?实时检测中�?
+                    # 🔍 实时检测中断
                     if await raw_request.is_disconnected():
                         app_logger.warning(f"🚫 request_id: {request_body.request_id} [Stream] 客户端断开连接")
                         break
                     
                     yield f"data: {chunk.model_dump_json()}\n\n"
                     
-                # 3. 发送结束事�?
+                # 3. 发送结束事件
                 end_event = {
                     "type": "end", 
                     "content": "",
@@ -196,8 +196,8 @@ async def chat_endpoint(request_body: InformationExtractionRequest, raw_request:
                 yield f"data: {json.dumps(end_event, ensure_ascii=False)}\n\n"
                 
             except asyncio.CancelledError:
-                app_logger.warning(f"🚫 request_id: {request_body.request_id} [Stream] 任务被系统取�?)
-                raise  # 重新抛出以确保资源清�?
+                app_logger.warning(f"🚫 request_id: {request_body.request_id} [Stream] 任务被系统取消")
+                raise  # 重新抛出以确保资源清理
             except Exception as e:
                 app_logger.error(f"流式处理错误: {traceback.format_exc()}")
                 error_event = {"type": "error", "content": f"处理错误: {str(e)}"}
@@ -224,12 +224,12 @@ async def chat_endpoint(request_body: InformationExtractionRequest, raw_request:
                 schema=request_body.schema, 
                 **run_config
             ):
-                # �?实时检测中�?
+                # 🔍 实时检测中断
                 if await raw_request.is_disconnected():
                     app_logger.warning(f"🚫 request_id: {request_body.request_id} [Non-Stream] 客户端断开连接")
                     raise HTTPException(status_code=499, detail="Client Closed Request")
                 
-                # 只捕�?final 类型的块
+                # 只捕获 final 类型的块
                 if chunk.type == "final":
                     final_response = chunk.metadata
             
@@ -238,10 +238,10 @@ async def chat_endpoint(request_body: InformationExtractionRequest, raw_request:
         except HTTPException:
             raise
         except asyncio.CancelledError:
-            app_logger.warning(f"🚫 request_id: {request_body.request_id} [Non-Stream] 任务被取�?)
+            app_logger.warning(f"🚫 request_id: {request_body.request_id} [Non-Stream] 任务被取消")
             raise HTTPException(status_code=499, detail="Request Cancelled")
         except Exception as e:
-            app_logger.error(f"非流式处理错�? {traceback.format_exc()}")
+            app_logger.error(f"非流式处理错误: {traceback.format_exc()}")
             raise HTTPException(status_code=500, detail=f"内部错误: {str(e)}")
 
 

@@ -1,4 +1,4 @@
-# text_correction_app_v2.py
+﻿# coding=utf-8
 import asyncio
 import os
 import sys
@@ -27,36 +27,36 @@ from utils.http_factory import GlobalHTTPFactory
 
 # ===== 请求/响应模型 =====
 class TextCorrectionRequest(BaseModel):
-    request_id: str = Field(..., description="请求ID，用于追�?)
+    request_id: str = Field(..., description="请求ID，用于追踪")
     text: str = Field(..., description="需要纠错的原始文本")
     
-    # --- 必填参数 (修改�? ---
+    # --- 必填参数 (修改后) ---
     model: str = Field(..., description="模型名称 (必填)")
     base_url: str = Field(..., description="API基础URL (必填)")
     api_key: str = Field(..., description="API密钥 (必填)")
     # -----------------------
 
     # 纠错特定参数
-    max_chunk_length: Optional[int] = Field(default=None, description="文本分块长度，默�?12")
+    max_chunk_length: Optional[int] = Field(default=None, description="文本分块长度，默认512")
 
     # 流式控制参数
     stream: bool = Field(default=False, description="是否启用流式输出")
     
     # LLM 配置参数
-    max_tokens: Optional[int] = Field(default=None, description="最大token�?)
-    temperature: float = Field(default=0.0, description="温度参数 (纠错建议�?)")
+    max_tokens: Optional[int] = Field(default=None, description="最大token数")
+    temperature: float = Field(default=0.0, description="温度参数 (纠错建议0)")
     top_p: float = Field(default=1.0, description="Top-p参数")
     timeout: float = Field(default=60.0, description="超时时间")
-    max_retries: int = Field(default=3, description="最大重试次�?)
-    enable_thinking: bool = Field(default=False, description="是否启用思考过�?)
+    max_retries: int = Field(default=3, description="最大重试次数")
+    enable_thinking: bool = Field(default=False, description="是否启用思考过程")
 
 
 class TextCorrectionResponse(BaseModel):
-    output: Dict[str, Any] = Field(description="业务结果，包含corrections, corrected_text�?)
-    content: str = Field(default="", description="模型最终输�?)
-    reasoning_content: str = Field(default="", description="思考过�?)
-    metadata: Dict[str, Any] = Field(default=None, description="元数�?)
-    confidence: float = Field(default=1.0, description="整体置信�?, ge=0, le=1)
+    output: Dict[str, Any] = Field(description="业务结果，包含corrections, corrected_text等")
+    content: str = Field(default="", description="模型最终输出")
+    reasoning_content: str = Field(default="", description="思考过程")
+    metadata: Dict[str, Any] = Field(default=None, description="元数据")
+    confidence: float = Field(default=1.0, description="整体置信度", ge=0, le=1)
 
 
 # ===== 生命周期管理 =====
@@ -66,10 +66,10 @@ app_logger = logger
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global agent_instance
-    print("🔧 正在初始�?TextCorrectionAgent...")
+    print("🔧 正在初始化 TextCorrectionAgent...")
     try:
         app_name = "text_correction"
-        # 初始化日志配�?
+        # 初始化日志配置
         logger_pool.set_logger(
             name=app_name,
             log_level=os.getenv("TCR_LOG_LEVEL", "INFO"),
@@ -79,7 +79,7 @@ async def lifespan(app: FastAPI):
         )
         app_logger = logger_pool.get_logger(app_name)
         
-        # 2. 初始�?Agent (保留默认参数配置)
+        # 2. 初始化 Agent (保留默认参数配置)
         agent_instance = TextCorrectionAgent(
             name="textCorrection",
             model=os.getenv("TCR_MODEL", "deepseek-chat"),
@@ -94,14 +94,14 @@ async def lifespan(app: FastAPI):
             enable_thinking=bool(os.getenv("TCR_ENABLE_THINKING", "False")),
             max_chunk_length=int(os.getenv("TCR_MAX_CHUNK_LENGTH", "512")),
         )
-        app_logger.info("�?TextCorrectionAgent 初始化完�?)
+        app_logger.info("✅ TextCorrectionAgent 初始化完成")
     except Exception as e:
-        print(f"�?初始化失�? {e}")
+        print(f"❌ 初始化失败: {e}")
         raise
 
     yield
 
-    # 关闭时清�?
+    # 关闭时清理
     print("🧹 清理资源...")
     await GlobalHTTPFactory.close()
     agent_instance = None
@@ -110,13 +110,13 @@ async def lifespan(app: FastAPI):
 # ===== FastAPI App =====
 app = FastAPI(
     title="文本纠错服务 API",
-    description="基于 LangGraph + LLM 的文本纠错服务，支持长文本自动分块处�?,
+    description="基于 LangGraph + LLM 的文本纠错服务，支持长文本自动分块处理",
     version="1.0.0",
     lifespan=lifespan,
     root_path="/text_correction/v1"
 )
 
-# 添加 CORS 中间�?
+# 添加 CORS 中间件
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -126,8 +126,8 @@ app.add_middleware(
 )
 
 
-# ===== 健康检查接�?=====
-@app.get("/health", summary="健康检�?)
+# ===== 健康检查接口 =====
+@app.get("/health", summary="健康检查")
 async def health_check():
     if agent_instance is None:
         raise HTTPException(status_code=503, detail="Agent 未初始化")
@@ -135,23 +135,23 @@ async def health_check():
 
 
 # ===== 统一纠错接口 (合并流式与非流式) =====
-@app.post("/chat", response_model=Union[TextCorrectionResponse, str], summary="文本纠错（自动识别流�?非流式）")
+@app.post("/chat", response_model=Union[TextCorrectionResponse, str], summary="文本纠错（自动识别流式/非流式）")
 async def chat_endpoint(request_body: TextCorrectionRequest, raw_request: Request):
     """
-    统一文本纠错接口�?
-    - 如果 request_body.stream == True: 返回 SSE �?(text/event-stream)
+    统一文本纠错接口：
+    - 如果 request_body.stream == True: 返回 SSE 流 (text/event-stream)
     - 如果 request_body.stream == False: 返回 JSON (application/json)
-    均支持客户端断开连接时自动中断后端推理�?
+    均支持客户端断开连接时自动中断后端推理。
     
-    对输入的文本进行智能纠错，返回错误列表和修正后的文本�?
+    对输入的文本进行智能纠错，返回错误列表和修正后的文本。
     """
     if agent_instance is None:
-        raise HTTPException(status_code=503, detail="服务未就绪，请稍后再�?)
+        raise HTTPException(status_code=503, detail="服务未就绪，请稍后再试")
 
-    # 构建运行时参�?
+    # 构建运行时参数
     run_config = {
         "request_id": request_body.request_id,
-        # 必填�?
+        # 必填项
         "model": request_body.model,
         "base_url": request_body.base_url,
         "api_key": request_body.api_key,
@@ -162,19 +162,19 @@ async def chat_endpoint(request_body: TextCorrectionRequest, raw_request: Reques
         "top_p": request_body.top_p,
         "timeout": request_body.timeout,
         "max_retries": request_body.max_retries,
-        "stream": True,  # �?强制开启底层流�?
+        "stream": True,  # ⚠️ 强制开启底层流式
         "enable_thinking": request_body.enable_thinking,
         "max_chunk_length": request_body.max_chunk_length,
     }
     
-    # 过滤掉None�?
+    # 过滤掉None值
     run_config = {k: v for k, v in run_config.items() if v is not None}
 
-    # === 分支 1：流式响�?(SSE) ===
+    # === 分支 1：流式响应 (SSE) ===
     if request_body.stream:
         async def generate_sse():
             try:
-                # 1. 发送开始事�?
+                # 1. 发送开始事件
                 start_event = {
                     "type": "start",
                     "content": "",
@@ -187,14 +187,14 @@ async def chat_endpoint(request_body: TextCorrectionRequest, raw_request: Reques
                     text=request_body.text,
                     **run_config
                 ):
-                    # �?实时检测中�?
+                    # 🔍 实时检测中断
                     if await raw_request.is_disconnected():
                         app_logger.warning(f"🚫 request_id: {request_body.request_id} [Stream] 客户端断开连接")
                         break
                     
                     yield f"data: {chunk.model_dump_json()}\n\n"
                     
-                # 3. 发送结束事�?
+                # 3. 发送结束事件
                 end_event = {
                     "type": "end", 
                     "content": "",
@@ -203,8 +203,8 @@ async def chat_endpoint(request_body: TextCorrectionRequest, raw_request: Reques
                 yield f"data: {json.dumps(end_event, ensure_ascii=False)}\n\n"
                 
             except asyncio.CancelledError:
-                app_logger.warning(f"🚫 request_id: {request_body.request_id} [Stream] 任务被系统取�?)
-                raise  # 重新抛出以确保资源清�?
+                app_logger.warning(f"🚫 request_id: {request_body.request_id} [Stream] 任务被系统取消")
+                raise  # 重新抛出以确保资源清理
             except Exception as e:
                 app_logger.error(f"流式处理错误: {traceback.format_exc()}")
                 error_event = {"type": "error", "content": f"处理错误: {str(e)}"}
@@ -230,12 +230,12 @@ async def chat_endpoint(request_body: TextCorrectionRequest, raw_request: Reques
                 text=request_body.text,
                 **run_config
             ):
-                # �?实时检测中�?
+                # 🔍 实时检测中断
                 if await raw_request.is_disconnected():
                     app_logger.warning(f"🚫 request_id: {request_body.request_id} [Non-Stream] 客户端断开连接")
                     raise HTTPException(status_code=499, detail="Client Closed Request")
                 
-                # 只捕�?final 类型的块
+                # 只捕获 final 类型的块
                 if chunk.type == "final":
                     final_response = chunk.metadata
             
@@ -244,10 +244,10 @@ async def chat_endpoint(request_body: TextCorrectionRequest, raw_request: Reques
         except HTTPException:
             raise
         except asyncio.CancelledError:
-            app_logger.warning(f"🚫 request_id: {request_body.request_id} [Non-Stream] 任务被取�?)
+            app_logger.warning(f"🚫 request_id: {request_body.request_id} [Non-Stream] 任务被取消")
             raise HTTPException(status_code=499, detail="Request Cancelled")
         except Exception as e:
-            app_logger.error(f"非流式处理错�? {traceback.format_exc()}")
+            app_logger.error(f"非流式处理错误: {traceback.format_exc()}")
             raise HTTPException(status_code=500, detail=f"内部错误: {str(e)}")
 
 

@@ -1,4 +1,4 @@
-# query_rewriting_app.py
+﻿# coding=utf-8
 import asyncio
 import os
 import sys
@@ -30,11 +30,11 @@ class QueryRewriteRequest(BaseModel):
     request_id: str
     query: str = Field(..., description="需要改写的查询")
     conversation_history: Optional[List[Dict[str, Any]]] = Field(default=None, description="对话历史")
-    domain_context: Optional[str] = Field(default=None, description="领域上下文信�?)
-    max_rewrites: Optional[int] = Field(default=None, description="最大改写数�?)
+    domain_context: Optional[str] = Field(default=None, description="领域上下文信息")
+    max_rewrites: Optional[int] = Field(default=None, description="最大改写数量")
     preserve_system: bool = Field(default=True, description="是否保留系统消息")
     
-    # --- 必填参数 (修改�? ---
+    # --- 必填参数 (修改后) ---
     model: str = Field(..., description="模型名称 (必填)")
     base_url: str = Field(..., description="API基础URL (必填)")
     api_key: str = Field(..., description="API密钥 (必填)")
@@ -43,20 +43,20 @@ class QueryRewriteRequest(BaseModel):
     # 流式控制参数
     stream: bool = Field(default=False, description="是否启用流式输出")
     # LLM 配置参数
-    max_tokens: Optional[int] = Field(default=None, description="最大token�?)
+    max_tokens: Optional[int] = Field(default=None, description="最大token数")
     temperature: float = Field(default=0.3, description="温度参数")
     top_p: float = Field(default=1.0, description="Top-p参数")
     timeout: float = Field(default=60.0, description="超时时间")
-    max_retries: int = Field(default=3, description="最大重试次�?)
-    enable_thinking: bool = Field(default=False, description="是否启用思考过�?)
+    max_retries: int = Field(default=3, description="最大重试次数")
+    enable_thinking: bool = Field(default=False, description="是否启用思考过程")
 
 
 class QueryRewriteResponse(BaseModel):
     output: Dict[str, Any]
-    content: str = Field(default="", description="模型最终输�?)
-    reasoning_content: str = Field(default="", description="思考过�?)
-    metadata: Dict[str, Any] = Field(default=None, description="元数�?)
-    confidence: float = Field(default=1.0, description="整体置信�?, ge=0, le=1)
+    content: str = Field(default="", description="模型最终输出")
+    reasoning_content: str = Field(default="", description="思考过程")
+    metadata: Dict[str, Any] = Field(default=None, description="元数据")
+    confidence: float = Field(default=1.0, description="整体置信度", ge=0, le=1)
 
 
 # ===== 生命周期管理 =====
@@ -66,9 +66,9 @@ app_logger = logger
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global agent_instance
-    print("🔧 正在初始�?QueryRewriteAgent...")
+    print("🔧 正在初始化 QueryRewriteAgent...")
     try:
-        # 使用默认配置初始�?
+        # 使用默认配置初始化
         app_name = "query_rewriting"
         logger_pool.set_logger(
             name=app_name,
@@ -93,14 +93,14 @@ async def lifespan(app: FastAPI):
             enable_thinking=bool(os.getenv("QR_ENABLE_THINKING", "False")),
             default_max_rewrites=int(os.getenv("QR_DEFAULT_MAX_REWRITES", "5")),
         )
-        app_logger.info("�?QueryRewriteAgent 初始化完�?)
+        app_logger.info("✅ QueryRewriteAgent 初始化完成")
     except Exception as e:
-        print(f"�?初始化失�? {e}")
+        print(f"❌ 初始化失败: {e}")
         raise
 
     yield
 
-    # 关闭时清�?
+    # 关闭时清理
     print("🧹 清理资源...")
     await GlobalHTTPFactory.close()
     agent_instance = None
@@ -109,13 +109,13 @@ async def lifespan(app: FastAPI):
 # ===== FastAPI App =====
 app = FastAPI(
     title="查询改写服务 API",
-    description="基于 LangGraph + LLM 的查询改写服务，支持指代消歧、查询扩写、语义增强等策略，支持流式和非流式输�?,
+    description="基于 LangGraph + LLM 的查询改写服务，支持指代消歧、查询扩写、语义增强等策略，支持流式和非流式输出",
     version="1.0.0",
     lifespan=lifespan,
     root_path="/query_rewriting/v1"
 )
 
-# 添加 CORS 中间�?
+# 添加 CORS 中间件
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -125,8 +125,8 @@ app.add_middleware(
 )
 
 
-# ===== 健康检查接�?=====
-@app.get("/health", summary="健康检�?)
+# ===== 健康检查接口 =====
+@app.get("/health", summary="健康检查")
 async def health_check():
     if agent_instance is None:
         raise HTTPException(status_code=503, detail="Agent 未初始化")
@@ -134,26 +134,26 @@ async def health_check():
 
 
 # ===== 统一改写接口 (合并流式与非流式) =====
-@app.post("/chat", response_model=Union[QueryRewriteResponse, str], summary="查询改写（自动识别流�?非流式）")
+@app.post("/chat", response_model=Union[QueryRewriteResponse, str], summary="查询改写（自动识别流式/非流式）")
 async def chat_endpoint(request_body: QueryRewriteRequest, raw_request: Request):
     """
-    统一查询改写接口�?
-    - 如果 request_body.stream == True: 返回 SSE �?(text/event-stream)
+    统一查询改写接口：
+    - 如果 request_body.stream == True: 返回 SSE 流 (text/event-stream)
     - 如果 request_body.stream == False: 返回 JSON (application/json)
-    均支持客户端断开连接时自动中断后端推理�?
+    均支持客户端断开连接时自动中断后端推理。
     
-    支持多种改写策略�?
-    - 指代消歧：解析并替换代词，明确指代实�?
-    - 查询扩写：添加同义词和相关术�?
+    支持多种改写策略：
+    - 指代消歧：解析并替换代词，明确指代实体
+    - 查询扩写：添加同义词和相关术语
     - 查询改写：调整语法结构和表达视角
     - 语义增强：明确隐含上下文信息
     """
     if agent_instance is None:
-        raise HTTPException(status_code=503, detail="服务未就绪，请稍后再�?)
+        raise HTTPException(status_code=503, detail="服务未就绪，请稍后再试")
 
-    # 构建运行时参�?
-    # 注意：这里我们强�?enable stream=True 传给底层 Agent�?
-    # 这样底层会按 Token 生成，我们才能在非流式模式下也进行细粒度的中断检测�?
+    # 构建运行时参数
+    # 注意：这里我们强制 enable stream=True 传给底层 Agent。
+    # 这样底层会按 Token 生成，我们才能在非流式模式下也进行细粒度的中断检测。
     run_config = {
 
         "request_id": request_body.request_id,
@@ -167,18 +167,18 @@ async def chat_endpoint(request_body: QueryRewriteRequest, raw_request: Request)
         "top_p": request_body.top_p,
         "timeout": request_body.timeout,
         "max_retries": request_body.max_retries,
-        "stream": True,  # �?强制开启底层流式，以便于细粒度控制中断
+        "stream": True,  # ⚠️ 强制开启底层流式，以便于细粒度控制中断
         "enable_thinking": request_body.enable_thinking,
     }
     
-    # 过滤掉None�?
+    # 过滤掉None值
     run_config = {k: v for k, v in run_config.items() if v is not None}
 
-    # === 分支 1：流式响�?(SSE) ===
+    # === 分支 1：流式响应 (SSE) ===
     if request_body.stream:
         async def generate_sse():
             try:
-                # 1. 发送开始事�?
+                # 1. 发送开始事件
                 start_event = {
                     "type": "start",
                     "content": "",
@@ -195,14 +195,14 @@ async def chat_endpoint(request_body: QueryRewriteRequest, raw_request: Request)
                     preserve_system=request_body.preserve_system,
                     **run_config
                 ):
-                    # �?实时检测中�?
+                    # 🔍 实时检测中断
                     if await raw_request.is_disconnected():
                         app_logger.warning(f"🚫 request_id: {request_body.request_id} [Stream] 客户端断开连接")
                         break
                     
                     yield f"data: {chunk.model_dump_json()}\n\n"
                     
-                # 3. 发送结束事�?
+                # 3. 发送结束事件
                 end_event = {
                     "type": "end", 
                     "content": "",
@@ -211,8 +211,8 @@ async def chat_endpoint(request_body: QueryRewriteRequest, raw_request: Request)
                 yield f"data: {json.dumps(end_event, ensure_ascii=False)}\n\n"
                 
             except asyncio.CancelledError:
-                app_logger.warning(f"🚫 request_id: {request_body.request_id} [Stream] 任务被系统取�?)
-                raise  # 重新抛出以确保资源清�?
+                app_logger.warning(f"🚫 request_id: {request_body.request_id} [Stream] 任务被系统取消")
+                raise  # 重新抛出以确保资源清理
             except Exception as e:
                 app_logger.error(f"流式处理错误: {traceback.format_exc()}")
                 error_event = {"type": "error", "content": f"处理错误: {str(e)}"}
@@ -242,15 +242,15 @@ async def chat_endpoint(request_body: QueryRewriteRequest, raw_request: Request)
                 preserve_system=request_body.preserve_system,
                 **run_config
             ):
-                # �?实时检测中断：即使是非流式，也能在生成过程中被掐断
+                # 🔍 实时检测中断：即使是非流式，也能在生成过程中被掐断
                 if await raw_request.is_disconnected():
                     app_logger.warning(f"🚫 request_id: {request_body.request_id} [Non-Stream] 客户端断开连接")
-                    # 这里抛出异常会停�?run_stream 的执�?
+                    # 这里抛出异常会停止 run_stream 的执行
                     raise HTTPException(status_code=499, detail="Client Closed Request")
                 
-                # 只捕�?final 类型的块
+                # 只捕获 final 类型的块
                 if chunk.type == "final":
-                    # metadata 中包含了完整�?QueryRewriteResponse 所需字段
+                    # metadata 中包含了完整的 QueryRewriteResponse 所需字段
                     final_response = chunk.metadata
             
             return QueryRewriteResponse(**final_response)
@@ -258,10 +258,10 @@ async def chat_endpoint(request_body: QueryRewriteRequest, raw_request: Request)
         except HTTPException:
             raise
         except asyncio.CancelledError:
-            app_logger.warning(f"🚫 request_id: {request_body.request_id} [Non-Stream] 任务被取�?)
+            app_logger.warning(f"🚫 request_id: {request_body.request_id} [Non-Stream] 任务被取消")
             raise HTTPException(status_code=499, detail="Request Cancelled")
         except Exception as e:
-            app_logger.error(f"非流式处理错�? {traceback.format_exc()}")
+            app_logger.error(f"非流式处理错误: {traceback.format_exc()}")
             raise HTTPException(status_code=500, detail=f"内部错误: {str(e)}")
 
 
