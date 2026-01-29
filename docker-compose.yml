@@ -1,0 +1,130 @@
+version: '3.8'
+
+# 公共配置
+x-common-service: &default-service
+  restart: unless-stopped
+  volumes:
+    - ./logs:/app/logs:rw
+  environment:
+    - PYTHONUNBUFFERED=1
+  healthcheck:
+    interval: 60s
+    timeout: 10s
+    retries: 3
+    start_period: 20s
+
+services:
+  # 基础镜像构建
+  base-build:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: base-agent:v1
+
+  # 文档问答
+  evidence_based_docqa:
+    <<: *default-service
+    build:
+      context: .
+      dockerfile: applications/evidence_based_docqa/dockerfile
+    ports:
+      - "8000:8000"
+    command: ["uvicorn", "applications.evidence_based_docqa.doc_qa_app:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/evidence_based_docqa/v1/health || exit 1"]
+
+  # 信息抽取
+  information_extraction:
+    <<: *default-service
+    build:
+      context: .
+      dockerfile: applications/information_extraction/dockerfile
+    ports:
+      - "8001:8001"
+    command: ["uvicorn", "applications.information_extraction.information_extract_app:app", "--host", "0.0.0.0", "--port", "8001", "--workers", "1"]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8001/information_extraction/v1/health || exit 1"]
+
+  # 关键词生成
+  keyword_generation:
+    <<: *default-service
+    build:
+      context: .
+      dockerfile: applications/keyword_generation/dockerfile
+    ports:
+      - "8002:8002"
+    command: ["uvicorn", "applications.keyword_generation.keyword_app:app", "--host", "0.0.0.0", "--port", "8002", "--workers", "1"]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8002/keyword_generation/v1/health || exit 1"]
+
+  # 查询改写
+  query_rewriting:
+    <<: *default-service
+    build:
+      context: .
+      dockerfile: applications/query_rewriting/dockerfile
+    ports:
+      - "8003:8003"
+    command: ["uvicorn", "applications.query_rewriting.query_rewriting_app:app", "--host", "0.0.0.0", "--port", "8003", "--workers", "1"]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8003/query_rewriting/v1/health || exit 1"]
+
+  # Schema生成
+  schema_generation:
+    <<: *default-service
+    build:
+      context: .
+      dockerfile: applications/schema_generation/dockerfile
+    ports:
+      - "8004:8004"
+    command: ["uvicorn", "applications.schema_generation.schema_generation_app:app", "--host", "0.0.0.0", "--port", "8004", "--workers", "1"]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8004/schema_generation/v1/health || exit 1"]
+
+  # 文本摘要
+  text_summarization:
+    <<: *default-service
+    build:
+      context: .
+      dockerfile: applications/summarization/dockerfile
+    ports:
+      - "8005:8005"
+    command: ["uvicorn", "applications.summarization.summarization_app:app", "--host", "0.0.0.0", "--port", "8005", "--workers", "1"]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8005/text_summarization/v1/health || exit 1"]
+
+  # 文本分类
+  text_classification:
+    <<: *default-service
+    build:
+      context: .
+      dockerfile: applications/text_classification/dockerfile
+    ports:
+      - "8006:8006"
+    command: ["uvicorn", "applications.text_classification.text_classification_app:app", "--host", "0.0.0.0", "--port", "8006", "--workers", "1"]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8006/text_classification/v1/health || exit 1"]
+
+  # 文本纠错
+  text_correction:
+    <<: *default-service
+    build:
+      context: .
+      dockerfile: applications/text_correction/dockerfile
+    ports:
+      - "8007:8007"
+    command: ["uvicorn", "applications.text_correction.text_correction_app:app", "--host", "0.0.0.0", "--port", "8007", "--workers", "1"]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8007/text_correction/v1/health || exit 1"]
+
+  # 文本翻译
+  text_translation:
+    <<: *default-service
+    build:
+      context: .
+      dockerfile: applications/translation/dockerfile
+    ports:
+      - "8008:8008"
+    command: ["uvicorn", "applications.translation.translation_app:app", "--host", "0.0.0.0", "--port", "8008", "--workers", "1"]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8008/text_translation/v1/health || exit 1"]

@@ -1,0 +1,92 @@
+# 虚拟环境
+.venv/
+venv/
+env/
+.env/
+ENV/
+
+# 日志文件
+logs/
+*.log
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# 环境变量 (敏感信息)
+.env
+.env.local
+.env.*.local
+*.env
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+
+# 测试覆盖率
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# 操作系统
+.DS_Store
+Thumbs.db
+*.bak
+*.tmp
+*.temp
+
+# 私有脚本和配置
+scripts/
+config/
+
+# 密钥文件
+*.pem
+*.key
+*.crt
+*.cer
+private_key*
+public_key*
+
+# 数据库
+*.db
+*.sqlite3
+
+# Docker
+.docker/
+
+# 不需要开源的文件
+utils/api_key_decrypt.py
+data/

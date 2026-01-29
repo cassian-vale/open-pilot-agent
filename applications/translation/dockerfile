@@ -1,0 +1,10 @@
+# 从同一个基础镜像开�?
+FROM base-agent:v1
+
+WORKDIR /app
+
+# 暴露端口
+EXPOSE 8008
+
+# 启动命令
+CMD ["sh", "-c", "uvicorn applications.translation.translation_app:app --host 0.0.0.0 --port ${IE_SERVICE_PORT:-8008} --workers ${IE_SERVICE_WORKERS:-1}"]

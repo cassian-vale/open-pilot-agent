@@ -1,0 +1,10 @@
+# 从同一个基础镜像开�?
+FROM base-agent:v1
+
+WORKDIR /app
+
+# 暴露端口
+EXPOSE 8000
+
+# 直接使用基础镜像中已安装的依�?
+CMD ["uvicorn", "applications.evidence_based_docqa.doc_qa_app:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]

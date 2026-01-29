@@ -1,0 +1,11 @@
+requests==2.32.5
+httpx[socks]
+httpx[http2]
+loguru==0.7.3
+langchain==0.3.27
+langgraph==0.6.7
+langchain-openai==0.3.33
+langchain-community==0.3.29
+fastapi==0.117.1
+uvicorn[standard]==0.36.0
+cryptography
