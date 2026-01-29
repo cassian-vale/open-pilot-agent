@@ -116,6 +116,14 @@ We welcome all forms of contributions! Whether it's reporting bugs, suggesting n
    - Push to the branch (`git push origin feature/AmazingFeature`).
    - Open a Pull Request.
 
+## Contributors
+
+Thank you to everyone who has contributed to the development of Open Pilot Agent!
+
+<a href="https://github.com/cassian-vale/open-pilot-agent/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=cassian-vale/open-pilot-agent" />
+</a>
+
 ---
 <p align="center">
   Built with ❤️ by the Open Pilot Community

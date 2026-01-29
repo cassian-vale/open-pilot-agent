@@ -119,6 +119,14 @@ make reload
    - 推送到该分支 (`git push origin feature/AmazingFeature`)。
    - 开启一个 Pull Request。
 
+## 致谢贡献者
+
+感谢所有为 Open Pilot Agent 做出贡献的朋友们！
+
+<a href="https://github.com/cassian-vale/open-pilot-agent/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=cassian-vale/open-pilot-agent" />
+</a>
+
 ---
 <p align="center">
   由 Open Pilot 社区倾情打造 ❤️
