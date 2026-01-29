@@ -11,10 +11,10 @@ Open Pilot Agent 是一个基于 **LangGraph** 和自定义 **LLMClient** 的高
 
 ## 网页 Demo 与 在线 API
 - **地址**: [https://apilot.org](https://apilot.org)
-- **在线体验**: 网页版简单配置自己的第三方模型 API (OpenAI 兼容) 后即可直接在线体验各项功能。
-- **API 调用**: 在控制台创建 **Pilot API Key** 后即可直接调用在线 Agent 服务接口。
+- **在线体验 (免费)**: 网页版简单配置自己的第三方模型 API (OpenAI 兼容) 后即可直接在线免费体验各项功能。
+- **API 调用 (免费)**: 在控制台创建 **Pilot API Key** 后即可直接免费调用在线 Agent 服务接口。
 - **在线文档**: [https://apilot.org/docs/overview](https://apilot.org/docs/overview)
-- **提示**: 仅支持 Google/GitHub 账号登录，中国大陆地区访问需要 VPN。
+- **提示**: 由于仅支持 Google/GitHub 账号登录，中国大陆地区用户在登录时需使用 VPN。
 
 ## 核心能力（项目可以做什么？）
 - **认知与检索**:
@@ -37,7 +37,7 @@ Open Pilot Agent 是一个基于 **LangGraph** 和自定义 **LLMClient** 的高
 - **安装指南**: [英文](./docs/en/install/docker.md) | [中文](./docs/zh/install/docker.md)
 - **指南文档**:
   - 基础指南: [英文](./docs/en/instructions/base_agent/BaseAgent_Basic_Guide.md) | [中文](./docs/zh/instructions/base_agent/BaseAgent应用基础指南.md)
-  - 进阶指南: [英文](./docs/en/instructions/base_agent/BaseAgent_Advanced_Guide.md) | [中文](./docs/zh/instructions/base_agent/BaseAgent应用进阶指南.md)
+  - 开发者进阶开发指南: [英文](./docs/en/instructions/base_agent/BaseAgent_Advanced_Guide.md) | [中文](./docs/zh/instructions/base_agent/BaseAgent应用进阶指南.md)
 
 ## 快速开始
 

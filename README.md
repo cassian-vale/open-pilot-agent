@@ -11,10 +11,10 @@ Open Pilot Agent is a high-performance, structured AI agent framework based on *
 
 ## Web Demo & Online API
 - **URL**: [https://apilot.org](https://apilot.org)
-- **Online Experience**: Configure your own third-party model API (OpenAI-compatible) to start using the tools online.
-- **API Access**: Create your **Pilot API Key** in the dashboard to call our hosted agent service APIs.
+- **Online Experience (Free)**: Configure your own third-party model API (OpenAI-compatible) to start using the tools online for free.
+- **API Access (Free)**: Create your **Pilot API Key** in the dashboard to call our hosted agent service APIs for free.
 - **Online Documentation**: [https://apilot.org/docs/overview](https://apilot.org/docs/overview)
-- **Note**: Supports Google/GitHub account login only. Access from Mainland China requires a VPN (ladder).
+- **Note**: Since only Google/GitHub account login is supported, a VPN is required for the login process from Mainland China.
 
 ## Capabilities (What can this project do?)
 - **Cognition & Retrieval**:
@@ -37,7 +37,7 @@ Open Pilot Agent is a high-performance, structured AI agent framework based on *
 - **Installation Guide**: [English](./docs/en/install/docker.md) | [Chinese](./docs/zh/install/docker.md)
 - **User Guides**:
   - Basic Guide: [English](./docs/en/instructions/base_agent/BaseAgent_Basic_Guide.md) | [Chinese](./docs/zh/instructions/base_agent/BaseAgent应用基础指南.md)
-  - Advanced Guide: [English](./docs/en/instructions/base_agent/BaseAgent_Advanced_Guide.md) | [Chinese](./docs/zh/instructions/base_agent/BaseAgent应用进阶指南.md)
+  - Developer Advanced Guide: [English](./docs/en/instructions/base_agent/BaseAgent_Advanced_Guide.md) | [Chinese](./docs/zh/instructions/base_agent/BaseAgent应用进阶指南.md)
 
 ## Quick Start
 
